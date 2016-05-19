@@ -1,2 +1,2 @@
 # ZZYAlertView
-自定义弹出框 Custom AlertVuew
+自定义弹出框 Custom AlertView
