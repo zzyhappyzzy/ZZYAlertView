@@ -90,6 +90,7 @@
             [mAtt addAttribute:NSForegroundColorAttributeName value:tmpColor range:range];
         }
     }
+    self.msgLabel.attributedText = mAtt;
     CGFloat msgLabelWidth = self.mainAlertView.frame.size.width - 2 * self.leftRightMargin;
     CGSize labelSize = [self.msgLabel sizeThatFits:CGSizeMake(msgLabelWidth, MAXFLOAT)];
     self.mainAlertViewHeight = self.topMargin + labelSize.height + self.bottomMargin;
