@@ -24,6 +24,13 @@
 
 @end
 
+@interface AttributeTextInfo : NSObject
+
+@property (nonatomic, strong) NSString *colorStr;
+@property (nonatomic, strong) UIColor *theColor;
+
+@end
+
 @interface ZZYAlertView : UIView
 
 /**
@@ -110,6 +117,11 @@
  *  弹出框文字的对齐方式(默认为center)
  */
 @property (nonatomic, assign) NSTextAlignment msgLabelTextAlignment;
+
+/**
+ *  需要额外标注颜色的字符串；元素为AttributeTextInfo的实例
+ */
+@property (nonatomic, strong) NSArray *attributeInfos;
 
 @property (nonatomic, assign) id<ZZYAlertViewDelegate>delegate;
 

@@ -77,7 +77,15 @@
 }
 
 - (void)configureSubViews {
-    self.msgLabel.attributedText = [[NSAttributedString alloc] initWithString:self.msgText attributes:[self configureMsgParagraphStyle]];
+    NSMutableAttributedString *mAtt = [[NSMutableAttributedString alloc] initWithString:self.msgText attributes:[self configureMsgParagraphStyle]];
+    for (AttributeTextInfo *obj in self.attributeInfos) {
+        NSString *tmpStr = obj.colorStr;
+        UIColor *tmpColor = obj.theColor;
+        NSRange range = [self.msgText rangeOfString:tmpStr];
+        if (range.location != NSNotFound && tmpColor) {
+            [mAtt addAttribute:NSForegroundColorAttributeName value:tmpColor range:range];
+        }
+    }
     CGFloat msgLabelWidth = self.mainAlertView.frame.size.width - 2 * self.leftRightMargin;
     CGSize labelSize = [self.msgLabel sizeThatFits:CGSizeMake(msgLabelWidth, MAXFLOAT)];
     self.mainAlertViewHeight = self.topMargin + labelSize.height + self.bottomMargin;
@@ -355,6 +363,13 @@
         _actionButtonsFont = actionButtonsFont;
         [self.cancelBtn.titleLabel setFont:_actionButtonsFont];
         [self.confirmBtn.titleLabel setFont:_actionButtonsFont];
+    }
+}
+
+- (void)setAttributeInfos:(NSArray *)attributeInfos {
+    if (_attributeInfos != attributeInfos) {
+        _attributeInfos = attributeInfos;
+        [self configureSubViews];
     }
 }
 
