@@ -11,15 +11,19 @@
 
 #define SCREEN_WIDTH [[UIScreen mainScreen] bounds].size.width
 #define SCREEN_HEIGHT [[UIScreen mainScreen] bounds].size.height
+#define iOSVersion [[[UIDevice currentDevice] systemVersion] floatValue]
 
 @implementation AttributeTextInfo
 
-@end
-
-@interface ZZYAlertView() {
-    NSTimer *autoHideTimer;
+- (NSString*)description{
+    return [NSString stringWithFormat:@"color :%@, text:%@", self.theColor, self.colorStr];
 }
 
+@end
+
+@interface ZZYAlertView()
+
+@property (nonatomic, strong) NSString *titleText;
 @property (nonatomic, strong) NSString *msgText;
 @property (nonatomic, strong) NSString *cancelText;
 @property (nonatomic, strong) NSString *confirmText;
@@ -27,11 +31,15 @@
 @property (nonatomic, strong) UIView *maskView;
 @property (nonatomic, strong) UIView *mainAlertView;
 @property (nonatomic, strong) UIView *sepView;
+@property (nonatomic, strong) UILabel *titleLabel;
 @property (nonatomic, strong) UILabel *msgLabel;
 @property (nonatomic, strong) UIButton *cancelBtn;
 @property (nonatomic, strong) UIButton *confirmBtn;
 
 @property (nonatomic, assign) CGFloat mainAlertViewHeight;
+@property (nonatomic, assign) CGFloat titleLabelHeight;
+
+@property (nonatomic, strong) NSTimer *autoHideTimer;
 
 @end
 
@@ -49,25 +57,51 @@
     return self;
 }
 
+- (instancetype)initWithTitle:(NSString *)title message:(NSString *)msg cancelButton:(NSString *)cancelStr confirmButton:(NSString *)confirmStr {
+    self = [self initWithFrame:[[UIScreen mainScreen] bounds]];
+    if (self) {
+        self.titleText = title;
+        self.msgText = msg;
+        self.cancelText = cancelStr;
+        self.confirmText = confirmStr;
+        [self basicInit];
+        [self layout];
+    }
+    return self;
+}
+
 /**
  *  默认值的初始化
  */
 - (void)basicInit {
     _maskViewBgColor = [[UIColor blackColor] colorWithAlphaComponent:0.3];
     _mainAlertViewHeight = 300;
-    _mainAlertViewBgColor = [[UIColor blackColor] colorWithAlphaComponent:0.8];
+    _mainAlertViewBgColor = [UIColor whiteColor];
     _cornerRadius = 10;
-    _msgTextColor = [UIColor whiteColor];
-    _cancelButtonTextColor = [UIColor colorWithRed:0/255.0 green:147/255.0 blue:255/255.0 alpha:1.0];
-    _confirmButtonTextColor = [UIColor colorWithRed:0/255.0 green:103/255.0 blue:178/255.0 alpha:1.0];
-    _sepViewBgColor = [UIColor colorWithRed:85/255.0 green:85/255.0 blue:85/255.0 alpha:1.0];
-    _interActHeight = 45;
-    _topMargin = 30;
-    _bottomMargin = 25;
-    _leftRightMargin = 34;
-    _leftRightPadding = 35;
+    _titleTextColor = COLOR_33;
+    _msgTextColor = COLOR_33;
+    _cancelButtonTextColor = COLOR_99;
+    _confirmButtonTextColor = THEME_COLOR;
+    _sepViewBgColor = COLOR_CC;
+    _interActHeight = 44;
+    if (self.titleText.length) {
+        _topMargin = 10;
+        _bottomMargin = 20;
+        _titleLabelHeight = 45;
+    }else {
+        _topMargin = 28;
+        _bottomMargin = 28;
+        _titleLabelHeight = 0;
+    }
+    _leftRightMargin = SCREEN_WIDTH*(1 - 300.0 / 375.0)/2.0;
+    _leftRightPadding = 28;
+    _titleLabelFont = [UIFont systemFontOfSize:18];
     _msgTextFont = [UIFont systemFontOfSize:14];
-    _actionButtonsFont = [UIFont systemFontOfSize:16];
+    if (iOSVersion >= 8.2) {
+        _actionButtonsFont = [UIFont systemFontOfSize:16 weight:UIFontWeightMedium];
+    }else {
+        _actionButtonsFont = [UIFont systemFontOfSize:16];
+    }
     _characterSpacing = 0;
     _lineSpacing = 5;
     _msgLabelTextAlignment = NSTextAlignmentCenter;
@@ -76,11 +110,25 @@
 - (void)layout {
     [self addSubview:self.maskView];
     [self addSubview:self.mainAlertView];
+    if (self.titleText.length) {
+        [self.mainAlertView addSubview:self.titleLabel];
+    }
     [self.mainAlertView addSubview:self.msgLabel];
     [self configureSubViews];
 }
 
 - (void)configureSubViews {
+    CGFloat labelWidth = self.mainAlertView.frame.size.width - 2 * self.leftRightMargin;
+    
+    CGFloat oriY = self.topMargin;
+    //title
+    if (self.titleText.length) {
+        self.titleLabel.frame = CGRectMake(self.leftRightMargin, oriY, labelWidth, self.titleLabelHeight);
+        self.titleLabel.text = self.titleText;
+        oriY += self.titleLabelHeight;
+    }
+    
+    //msg
     NSMutableAttributedString *mAtt = [[NSMutableAttributedString alloc] initWithString:self.msgText attributes:[self configureMsgParagraphStyle]];
     for (AttributeTextInfo *obj in self.attributeInfos) {
         NSString *tmpStr = obj.colorStr;
@@ -91,9 +139,8 @@
         }
     }
     self.msgLabel.attributedText = mAtt;
-    CGFloat msgLabelWidth = self.mainAlertView.frame.size.width - 2 * self.leftRightMargin;
-    CGSize labelSize = [self.msgLabel sizeThatFits:CGSizeMake(msgLabelWidth, MAXFLOAT)];
-    self.mainAlertViewHeight = self.topMargin + labelSize.height + self.bottomMargin;
+    CGSize labelSize = [self.msgLabel sizeThatFits:CGSizeMake(labelWidth, MAXFLOAT)];
+    self.mainAlertViewHeight = oriY + labelSize.height + self.bottomMargin;
     if (self.cancelText.length > 0 || self.confirmText.length > 0) {
         self.mainAlertViewHeight += 1 + self.interActHeight;
     }
@@ -104,14 +151,20 @@
     
     frame = self.msgLabel.frame;
     frame.origin.x = self.leftRightMargin;
-    frame.origin.y = self.topMargin;
-    frame.size.width = msgLabelWidth;
+    frame.origin.y = oriY;
+    frame.size.width = labelWidth;
     frame.size.height = labelSize.height;
     self.msgLabel.frame = frame;
     
+    //btn
     if (self.confirmText.length > 0 || self.cancelText.length > 0) {
-        int btnCnt = 0;
         [self.mainAlertView addSubview:self.sepView];
+        
+        frame = self.sepView.frame;
+        frame.origin.y = oriY + self.msgLabel.frame.size.height + self.bottomMargin;
+        self.sepView.frame = frame;
+        
+        int btnCnt = 0;
         if (self.confirmText.length > 0) {
             btnCnt++;
             [self.mainAlertView addSubview:self.confirmBtn];
@@ -136,25 +189,33 @@
             [autoHideTimer invalidate];
             autoHideTimer = nil;
         }
-        autoHideTimer = [NSTimer scheduledTimerWithTimeInterval:2.0 target:self selector:@selector(hide) userInfo:nil repeats:NO];
+        autoHideTimer = [NSWeakTimer scheduledTimerWithTimeInterval:2.0 target:self selector:@selector(hide) userInfo:nil repeats:NO];
     }
 }
 
 - (NSDictionary *)configureMsgParagraphStyle {
     NSMutableDictionary *dic = [NSMutableDictionary dictionary];
-    [dic setObject:self.msgLabel.font forKey:(NSString *)kCTFontAttributeName];
-    [dic setObject:self.msgLabel.textColor forKey:(NSString *)kCTForegroundColorAttributeName];
-    [dic setObject:@(self.characterSpacing) forKey:(NSString *)kCTKernAttributeName];
+    [dic setObject:self.msgLabel.font forKey:NSFontAttributeName];
+    [dic setObject:self.msgLabel.textColor forKey:NSForegroundColorAttributeName];
+    [dic setObject:@(self.characterSpacing) forKey:NSKernAttributeName];
     NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle alloc] init];
     paragraphStyle.alignment = self.msgLabel.textAlignment;
     paragraphStyle.lineSpacing = self.lineSpacing;
     paragraphStyle.lineBreakMode = self.msgLabel.lineBreakMode;
-    [dic setObject:paragraphStyle forKey:(NSString *)kCTParagraphStyleAttributeName];
+    [dic setObject:paragraphStyle forKey:NSParagraphStyleAttributeName];
     return [NSDictionary dictionaryWithDictionary:dic];
 }
 
 - (void)show {
     UIWindow *window = [[UIApplication sharedApplication] keyWindow];
+    NSArray *arr = window.subviews;
+    if (arr.count > 0) {
+        for (UIView*obj in arr) {
+            if ([obj isKindOfClass:[HZTAlertView class]]) {
+                [obj removeFromSuperview];
+            }
+        }
+    }
     [window addSubview:self];
     [UIView animateWithDuration:0.3 animations:^{
         self.alpha = 1;
@@ -182,6 +243,10 @@
 }
 
 - (void)hide {
+    if (autoHideTimer) {
+        [autoHideTimer invalidate];
+        autoHideTimer = nil;
+    }
     [UIView animateWithDuration:0.3 animations:^{
         self.alpha = 0;
     } completion:^(BOOL finished) {
@@ -210,6 +275,18 @@
     return _mainAlertView;
 }
 
+- (UILabel *)titleLabel {
+    if (!_titleLabel) {
+        _titleLabel = [[UILabel alloc] init];
+        _titleLabel.numberOfLines = 1;
+        _titleLabel.textColor = self.titleTextColor;
+        _titleLabel.font = self.titleLabelFont;
+        _titleLabel.textAlignment = _msgLabelTextAlignment;
+        
+    }
+    return _titleLabel;
+}
+
 - (UILabel *)msgLabel {
     if (!_msgLabel) {
         _msgLabel = [[UILabel alloc] init];
@@ -226,9 +303,9 @@
     if (!_sepView) {
         UIView *view = [[UIView alloc] init];
         view.backgroundColor = self.sepViewBgColor;
+        view.frame = CGRectMake(0, 0, self.mainAlertView.frame.size.width, 0.5);
         _sepView = view;
     }
-    _sepView.frame = CGRectMake(0, self.topMargin + self.msgLabel.frame.size.height + self.bottomMargin, self.mainAlertView.frame.size.width, 0.5);
     return _sepView;
 }
 
@@ -237,6 +314,9 @@
         _confirmBtn = [[UIButton alloc] init];
         [_confirmBtn.titleLabel setFont:_actionButtonsFont];
         [_confirmBtn addTarget:self action:@selector(clickConfirmButton:) forControlEvents:UIControlEventTouchUpInside];
+        _confirmBtn.isAccessibilityElement = YES;
+        _confirmBtn.accessibilityIdentifier = @"alertConfirmBtnId";
+        _confirmBtn.accessibilityLabel = @"alertConfirmBtnLb";
     }
     return _confirmBtn;
 }
@@ -246,6 +326,9 @@
         _cancelBtn = [[UIButton alloc] init];
         [_cancelBtn.titleLabel setFont:_actionButtonsFont];
         [_cancelBtn addTarget:self action:@selector(clickCancelButton:) forControlEvents:UIControlEventTouchUpInside];
+        _cancelBtn.isAccessibilityElement = YES;
+        _cancelBtn.accessibilityIdentifier = @"alertCancelBtnId";
+        _cancelBtn.accessibilityLabel = @"alertCancelBtnLb";
     }
     return _cancelBtn;
 }
@@ -305,6 +388,13 @@
     }
 }
 
+- (void)setTitleTextColor:(UIColor *)titleTextColor {
+    if (titleTextColor != _titleTextColor) {
+        _titleTextColor = titleTextColor;
+        self.titleLabel.textColor = _titleTextColor;
+    }
+}
+
 - (void)setTopMargin:(CGFloat)topMargin {
     if (topMargin != _topMargin) {
         _topMargin = topMargin;
@@ -355,6 +445,14 @@
     }
 }
 
+- (void)setTitleLabelFont:(UIFont *)titleLabelFont {
+    if (titleLabelFont != _titleLabelFont) {
+        _titleLabelFont = titleLabelFont;
+        _titleLabel.font = _titleLabelFont;
+        [self configureSubViews];
+    }
+}
+
 - (void)setMsgLabelTextAlignment:(NSTextAlignment)msgLabelTextAlignment {
     if (msgLabelTextAlignment != _msgLabelTextAlignment) {
         _msgLabelTextAlignment = msgLabelTextAlignment;
@@ -378,7 +476,7 @@
     }
 }
 
-#pragma mark ----Actions----- 
+#pragma mark ----Actions-----
 
 - (void)clickConfirmButton:(UIButton *)btn {
     [self hide];
@@ -394,12 +492,4 @@
     }
 }
 
-#pragma mark ----Memory-----
-
-- (void)dealloc {
-    if (autoHideTimer) {
-        [autoHideTimer invalidate];
-        autoHideTimer = nil;
-    }
-}
 @end

@@ -79,6 +79,11 @@
 @property (nonatomic, strong) UIColor *sepViewBgColor;
 
 /**
+ 弹出框标题颜色
+ */
+@property (nonatomic, strong) UIColor *titleTextColor;
+
+/**
  *  弹出框文字颜色
  */
 @property (nonatomic, strong) UIColor *msgTextColor;
@@ -92,6 +97,11 @@
  *  确定按钮的文字颜色
  */
 @property (nonatomic, strong) UIColor *confirmButtonTextColor;
+
+/**
+ 弹出框标题的字体
+ */
+@property (nonatomic, strong) UIFont *titleLabelFont;
 
 /**
  *  弹出框文字的字体
@@ -123,7 +133,7 @@
  */
 @property (nonatomic, strong) NSArray *attributeInfos;
 
-@property (nonatomic, assign) id<ZZYAlertViewDelegate>delegate;
+@property (nonatomic, weak) id<HZTAlertViewDelegate>delegate;
 
 /**
  *  弹框实例化
@@ -135,6 +145,18 @@
  *  @return 实例
  */
 - (instancetype)initWithText:(NSString *)text cancelButton:(NSString *)cancelStr confirmButton:(NSString *)confirmStr;
+
+
+/**
+ 弹框实例
+
+ @param title 标题
+ @param msg 文字
+ @param cancelStr 取消文字（左边按钮）
+ @param confirmStr 确认文字（右边按钮）
+ @return 实例
+ */
+- (instancetype)initWithTitle:(NSString *)title message:(NSString *)msg cancelButton:(NSString *)cancelStr confirmButton:(NSString *)confirmStr;
 
 /**
  *  显示弹框
