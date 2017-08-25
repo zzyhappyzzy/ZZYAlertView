@@ -133,7 +133,7 @@
  */
 @property (nonatomic, strong) NSArray *attributeInfos;
 
-@property (nonatomic, weak) id<HZTAlertViewDelegate>delegate;
+@property (nonatomic, weak) id<ZZYAlertViewDelegate>delegate;
 
 /**
  *  弹框实例化

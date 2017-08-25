@@ -78,11 +78,11 @@
     _mainAlertViewHeight = 300;
     _mainAlertViewBgColor = [UIColor whiteColor];
     _cornerRadius = 10;
-    _titleTextColor = COLOR_33;
-    _msgTextColor = COLOR_33;
-    _cancelButtonTextColor = COLOR_99;
-    _confirmButtonTextColor = THEME_COLOR;
-    _sepViewBgColor = COLOR_CC;
+    _titleTextColor = [UIColor colorWithRed:33/255.0 green:33/255.0 blue:33/255.0 alpha:1.0];
+    _msgTextColor = [UIColor colorWithRed:33/255.0 green:33/255.0 blue:33/255.0 alpha:1.0];
+    _cancelButtonTextColor = [UIColor colorWithRed:66/255.0 green:66/255.0 blue:66/255.0 alpha:1.0];
+    _confirmButtonTextColor = [UIColor colorWithRed:245/255.0 green:54/255.0 blue:67/255.0 alpha:1.0];
+    _sepViewBgColor = [UIColor colorWithRed:204/255.0 green:204/255.0 blue:204/255.0 alpha:1.0];
     _interActHeight = 44;
     if (self.titleText.length) {
         _topMargin = 10;
@@ -185,11 +185,11 @@
             [_confirmBtn setTitleColor:self.confirmButtonTextColor forState:UIControlStateNormal];
         }
     }else {
-        if (autoHideTimer) {
-            [autoHideTimer invalidate];
-            autoHideTimer = nil;
+        if (_autoHideTimer) {
+            [_autoHideTimer invalidate];
+            _autoHideTimer = nil;
         }
-        autoHideTimer = [NSWeakTimer scheduledTimerWithTimeInterval:2.0 target:self selector:@selector(hide) userInfo:nil repeats:NO];
+        _autoHideTimer = [NSTimer scheduledTimerWithTimeInterval:2.0 target:self selector:@selector(hide) userInfo:nil repeats:NO];
     }
 }
 
@@ -209,11 +209,9 @@
 - (void)show {
     UIWindow *window = [[UIApplication sharedApplication] keyWindow];
     NSArray *arr = window.subviews;
-    if (arr.count > 0) {
-        for (UIView*obj in arr) {
-            if ([obj isKindOfClass:[HZTAlertView class]]) {
-                [obj removeFromSuperview];
-            }
+    for (UIView*obj in arr) {
+        if ([obj isKindOfClass:[ZZYAlertView class]]) {
+            [obj removeFromSuperview];
         }
     }
     [window addSubview:self];
@@ -243,10 +241,10 @@
 }
 
 - (void)hide {
-    if (autoHideTimer) {
-        [autoHideTimer invalidate];
-        autoHideTimer = nil;
+    if (_autoHideTimer) {
+        [_autoHideTimer invalidate];
     }
+    _autoHideTimer = nil;
     [UIView animateWithDuration:0.3 animations:^{
         self.alpha = 0;
     } completion:^(BOOL finished) {
